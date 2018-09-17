@@ -1,3 +1,10 @@
+#Settings
+.settings/*
+.*project
+
+#folders
+Debug/*
+
 # Prerequisites
 *.d
 
