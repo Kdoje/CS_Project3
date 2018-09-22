@@ -9,10 +9,11 @@
 #include<stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include "Message.h"
+
+#include "Mailbox.h"
 
 
-Message message[10];
+Mailbox mailbox[10];
 sem_t sumSem;
 
 //this writes the sum of the 2 numbers in the val1 spot
@@ -27,7 +28,7 @@ void *FindSum(void *threadid) {
 	//wait to make sure only one thing adds at once
 	sem_wait(&sumSem);
 	//add the nums
-	message[0].SendMsg(message[tid].val1+message[tid].val2, 0, ALLDONE, tid);
+	mailbox[0].SendMsg(mailbox[tid].val1+mailbox[tid].val2, 0, ALLDONE, tid);
 
 
 	pthread_exit(NULL);
@@ -45,7 +46,7 @@ int main(int argc, char* argv[]) {
 	//initializes the threads
 	int threadError;
 	int i;
-	message[0].ClearMsg();
+	mailbox[0].ClearMsg();
 	//create the threads
 	for (i = 0; i < THREAD_NUM; i++) {
 		printf("main() creating thread %d\n", i);
@@ -56,16 +57,16 @@ int main(int argc, char* argv[]) {
 		}
 		//give them the values to add
 		else{
-			message[i+1].SendMsg(0,5,RANGE, 0);
+			mailbox[i+1].SendMsg(0,5,RANGE, 0);
 		}
 	}
 
 	//check for messages
 	while(messagesNeeded>0){
 		//check for a good message
-		if(!message[0].isEmpty()){
-			sum+=message[0].val1;
-			message[0].ClearMsg();
+		if(!mailbox[0].isEmpty()){
+			sum+=mailbox[0].val1;
+			mailbox[0].ClearMsg();
 			messagesNeeded-=1;
 			//then say the message was recieved so the next producer can run
 			sem_post(&sumSem);

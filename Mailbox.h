@@ -5,24 +5,26 @@
  *      Author: kl
  */
 
-#ifndef MESSAGE_H_
-#define MESSAGE_H_
+#ifndef MAILBOX_H_
+#define MAILBOX_H_
 
 #define RANGE 1
 #define ALLDONE 2
 #define EMPTY -1
+#include<semaphore.h>
 
-class Message {
+class Mailbox {
 	int iSender;
 	int type;
+	sem_t boxSem;
 public:
 	int val1, val2;
-	Message();
+	Mailbox();
 	void SendMsg(int val1, int val2, int type, int iSender);
 	int RecvMsg(int iSender);
 	void ClearMsg();
 	bool isEmpty();
-	virtual ~Message();
+	virtual ~Mailbox();
 };
 
-#endif /* MESSAGE_H_ */
+#endif /* MAILBOX_H_ */
