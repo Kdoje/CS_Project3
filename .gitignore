@@ -1,10 +1,10 @@
 #Settings
 .settings/*
 .*project
-
+.autotools
 #folders
 Debug/*
-
+Default/*
 # Prerequisites
 *.d
 
