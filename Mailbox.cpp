@@ -7,29 +7,46 @@
 
 #include "Mailbox.h"
 
+bool operator ==(const contents& a, const contents& b){
+	return(a.val1==b.val1)&&(a.val2==b.val2);
+}
+
 Mailbox::Mailbox() {
-	sem_init(&boxSem);
+	sem_init(&recSem, 0 ,0);
+	sem_init(&sendSem, 0 ,1);
 	this->iSender=-1;
 	this->type=-1;
-	this-> val1=this->val2=0;
-
+	this->msgContents=NULL_CONTENTS;
 }
 
-void Mailbox::SendMsg(int val1, int val2, int type, int iSender){
-	this->val1=val1;
-	this->val2=val2;
+//a thread can send a message from the get-go. But only
+//one message can be in the mailbox at a time.
+void Mailbox::SendMsg(contents msgContents, int type, int iSender){
+	sem_wait(&sendSem);
+	this->msgContents=msgContents;
 	this->type=type;
 	this->iSender=iSender;
+	sem_post(&recSem);
 }
 
-int Mailbox::RecvMsg(int iSender){
-	return -1;
+//because of the way the semaphores are set up, this won't let
+//the caller read until it has a valid message
+contents Mailbox::RecvMsg(int iSender){
+	sem_wait(&recSem);
+	if(this->iSender!=EMPTY){
+		retval=msgContents;
+		ClearMsg();
+	}
+	else{
+		retval=NULL_CONTENTS;
+	}
+	sem_post(&sendSem);
+	return retval;
 }
 
 void Mailbox::ClearMsg() {
-	this->iSender = -1;
-	this->type = -1;
-	this->val1 = this->val2 = 0;
+	msgContents=NULL_CONTENTS;
+	this->iSender=EMPTY;
 }
 
 bool Mailbox::isEmpty(){
@@ -37,6 +54,7 @@ bool Mailbox::isEmpty(){
 }
 
 Mailbox::~Mailbox() {
-	// TODO Auto-generated destructor stub
+	sem_destroy(&sendSem);
+	sem_destroy(&recSem);
 }
 
