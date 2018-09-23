@@ -31,9 +31,9 @@ void *FindSum(void *threadid) {
 	for (int i = recieved.val1; i <= recieved.val2; i++) {
 		toSend.val1 += i;
 	}
-	printf("sending from %d\n", tid);
+//	printf("sending from %d\n", tid);
 	mailbox[0].SendMsg(toSend, ALLDONE, tid);
-	printf("message sent\n");
+//	printf("message sent\n");
 	pthread_exit(NULL);
 }
 
@@ -43,6 +43,14 @@ int main(int argc, char* argv[]) {
 		const int THREAD_NUM = atoi(argv[1]);
 		const int final = atoi(argv[2]);
 
+		if(THREAD_NUM<1 || THREAD_NUM>10){
+			printf("please enter thread no. between 1 and 10\n");
+			return -1;
+		}
+		if(final%THREAD_NUM!=0){
+			printf("WARNING the final value is not divisible by "
+					"thread count and may lead to incorrect output!\n");
+		}
 		int messagesNeeded = THREAD_NUM;
 		pthread_t threads[THREAD_NUM];
 		//set this to be one so one adder can run at first
@@ -52,7 +60,7 @@ int main(int argc, char* argv[]) {
 		int threadError;
 		//create the threads
 		for (int i = 0; i < THREAD_NUM; i++) {
-			printf("main() creating thread %d\n", i + 1);
+			//printf("main() creating thread %d\n", i + 1);
 			threadError = pthread_create(&threads[i], NULL, FindSum,
 					(void *) i + 1); //this sets the thread id's to be 1-> range
 			if (threadError) {
@@ -69,7 +77,7 @@ int main(int argc, char* argv[]) {
 			contents toSend;
 			toSend.val1 = prevVal + 1;
 			toSend.val2 = prevVal += step;
-			printf("val1: %d, val2: %d\n", toSend.val1, toSend.val2);
+			//printf("val1: %d, val2: %d\n", toSend.val1, toSend.val2);
 			mailbox[i].SendMsg(toSend, RANGE, 0);
 		}
 
@@ -79,7 +87,7 @@ int main(int argc, char* argv[]) {
 		while (messagesNeeded > 0) {
 			contents msgContents;
 			msgContents = mailbox[0].RecvMsg(1);
-			printf("read message\n");
+			//printf("read message\n");
 			sum += msgContents.val1;
 			messagesNeeded--;
 		}
