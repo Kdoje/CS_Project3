@@ -15,7 +15,7 @@
 
 Mailbox mailbox[11];
 sem_t sumSem;
-
+const int MAX_THREADS=10, MIN_THREADS=1;
 //this writes the sum of the 2 numbers in the val1 spot
 void *FindSum(void *threadid) {
 
@@ -31,8 +31,10 @@ void *FindSum(void *threadid) {
 	for (int i = recieved.val1; i <= recieved.val2; i++) {
 		toSend.val1 += i;
 	}
+	toSend.iSender=tid;
+	toSend.type=ALLDONE;
 //	printf("sending from %d\n", tid);
-	mailbox[0].SendMsg(toSend, ALLDONE, tid);
+	mailbox[0].SendMsg(toSend);
 //	printf("message sent\n");
 	pthread_exit(NULL);
 }
@@ -43,13 +45,9 @@ int main(int argc, char* argv[]) {
 		const int THREAD_NUM = atoi(argv[1]);
 		const int final = atoi(argv[2]);
 
-		if(THREAD_NUM<1 || THREAD_NUM>10){
+		if(THREAD_NUM<MIN_THREADS || THREAD_NUM>MAX_THREADS){
 			printf("please enter thread no. between 1 and 10\n");
 			return -1;
-		}
-		if(final%THREAD_NUM!=0){
-			printf("WARNING the final value is not divisible by "
-					"thread count and may lead to incorrect output!\n");
 		}
 		int messagesNeeded = THREAD_NUM;
 		pthread_t threads[THREAD_NUM];
@@ -73,14 +71,23 @@ int main(int argc, char* argv[]) {
 		printf("thread num %d, final val %d\n", THREAD_NUM, final);
 		int prevVal = 0;
 		int step = final / THREAD_NUM;
-		for (int i = 1; i <= THREAD_NUM; i++) {
+		for (int i = 1; i <= THREAD_NUM-1; i++) {
 			contents toSend;
 			toSend.val1 = prevVal + 1;
 			toSend.val2 = prevVal += step;
+			toSend.type=RANGE;
+			toSend.iSender=0;
 			//printf("val1: %d, val2: %d\n", toSend.val1, toSend.val2);
-			mailbox[i].SendMsg(toSend, RANGE, 0);
+			mailbox[i].SendMsg(toSend);
 		}
 
+		//send the last message to go through the range (fixes divisibility problem)
+		contents toSend;
+		toSend.val1 = prevVal + 1;
+		toSend.val2 = final;
+		toSend.type = RANGE;
+		toSend.iSender = 0;
+		mailbox[THREAD_NUM].SendMsg(toSend);
 		//set up sum
 		int sum = 0;
 		//check for messages
